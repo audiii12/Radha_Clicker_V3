@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Radha-Clicker</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font-family:Georgia,'Times New Roman',serif;color:#fff8e6;background:#2a6b4a;overflow:hidden;user-select:none;-webkit-user-select:none}
+#bg{position:fixed;inset:0;z-index:0}
+#bg svg{width:100%;height:100%}
+#app{position:relative;z-index:1;display:grid;grid-template-columns:1fr 330px;height:100%}
+.panel{display:flex;flex-direction:column;align-items:center;min-height:0}
+#left{justify-content:flex-start;padding:10px;position:relative;overflow:hidden}
+#title{font-size:clamp(26px,4vw,40px);margin:4px 0 0;text-shadow:0 2px 6px #000a;letter-spacing:1px;color:#ffe27a}
+#nameWrap{background:#0007;border-radius:10px;padding:6px 14px;margin-top:6px;text-align:center;cursor:pointer;font-size:18px}
+#nameWrap input{font:inherit;background:#fff;color:#222;border:0;border-radius:6px;padding:3px 8px;width:170px}
+#nameWrap small{display:block;font-size:11px;opacity:.7}
+#count{font-size:clamp(24px,4vw,36px);margin-top:10px;background:#0008;padding:6px 18px;border-radius:12px;text-align:center}
+#cps{font-size:14px;opacity:.9}
+#stage{flex:1;display:flex;align-items:center;justify-content:center;width:100%;min-height:0}
+#big{width:min(62vw,300px,42vh);aspect-ratio:1;cursor:pointer;border-radius:50%;transition:transform .08s;filter:drop-shadow(0 8px 14px #0008);-webkit-tap-highlight-color:transparent}
+#big:active,#big.pop{transform:scale(.93)}
+#big:hover{filter:drop-shadow(0 8px 18px #ffd34fcc)}
+#clicks{font-size:14px;background:#0008;padding:4px 14px;border-radius:20px;margin-bottom:8px}
+#fall{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.fp{position:absolute;top:-40px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(var(--r))}}
+.plus{position:absolute;pointer-events:none;font-weight:bold;font-size:22px;color:#fff;text-shadow:0 2px 4px #000;animation:up 1s forwards;z-index:5}
+@keyframes up{to{transform:translateY(-70px);opacity:0}}
+#right{background:#2b1408e6;border-left:3px solid #ffd34f;overflow-y:auto;padding:8px}
+#right h3{margin:6px 0;text-align:center;color:#ffe27a;font-size:18px;border-bottom:1px solid #ffd34f66;padding-bottom:4px}
+#ups{display:flex;gap:6px;flex-wrap:wrap;min-height:10px}
+.up{background:#5a2d0f;border:2px solid #ffd34f;border-radius:8px;padding:5px 8px;font-size:12px;cursor:pointer;flex:1 1 90px;text-align:center}
+.up.no,.item.no{opacity:.5;cursor:not-allowed}
+.up:not(.no):hover,.item:not(.no):hover{background:#7a3d12}
+.item{display:flex;align-items:center;gap:8px;background:#4a2410;border:2px solid #c98a2b;border-radius:10px;padding:8px;margin:6px 0;cursor:pointer}
+.item.locked{background:#222;border-color:#555;cursor:default;opacity:.7}
+.item .ic{font-size:28px;width:38px;text-align:center}
+.item .tx{flex:1;font-size:14px;line-height:1.25}
+.item .tx b{font-size:15px;color:#ffe27a}
+.item .cost{font-size:13px;color:#9dff9d}
+.item.no .cost{color:#ff9d9d}
+.item .n{font-size:26px;font-weight:bold;opacity:.7;min-width:30px;text-align:right}
+.bar{height:5px;background:#0006;border-radius:3px;margin-top:3px;overflow:hidden}.bar i{display:block;height:100%;background:#ffd34f}
+#toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:#ffd34f;color:#3a1b00;padding:8px 18px;border-radius:20px;z-index:20;font-weight:bold;opacity:0;transition:opacity .4s;pointer-events:none;text-align:center}
+@media(max-width:760px){
+ #app{grid-template-columns:1fr;grid-template-rows:56% 44%}
+ #right{border-left:0;border-top:3px solid #ffd34f}
+ #big{width:min(40vw,200px,28vh)}
+ #title{font-size:24px}
+}
+html{touch-action:manipulation;overscroll-behavior:none;-webkit-touch-callout:none;-webkit-text-size-adjust:100%}
+#big,#left{touch-action:none}
+#choose{position:fixed;inset:0;z-index:100;background:linear-gradient(#f6a04d,#2a6b4a);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px}
+#choose h1{margin:0;color:#fff3b0;text-shadow:0 2px 6px #0008;font-size:clamp(30px,8vw,48px)}
+#choose p{margin:0 0 6px;font-size:18px}
+#choose button{font:inherit;font-size:22px;width:min(300px,80vw);padding:16px;border-radius:14px;border:3px solid #ffd34f;background:#5a2d0f;color:#fff8e6;cursor:pointer;touch-action:manipulation}
+#choose button:hover,#choose button:active{background:#7a3d12}
+.sbtn{display:none;font:inherit;font-size:18px;padding:12px 22px;border-radius:14px;border:3px solid #ffd34f;background:#5a2d0f;color:#fff8e6;touch-action:manipulation;margin-top:6px;cursor:pointer}
+body.phone .sbtn{display:block}
+#closeStore{position:sticky;top:0;width:100%;margin:0 0 8px;z-index:2}
+body.phone #app{grid-template-columns:1fr;grid-template-rows:100%}
+body.phone #left{padding:8px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px))}
+body.phone #right{position:fixed;inset:0;z-index:50;border:0;display:none;padding:12px;padding-top:calc(12px + env(safe-area-inset-top,0px));-webkit-overflow-scrolling:touch}
+body.phone.store #right{display:block}
+body.phone #nameWrap{font-size:15px;padding:4px 10px}
+body.phone #count{font-size:24px;padding:4px 14px;margin-top:8px}
+body.phone #clicks{margin-bottom:4px}
+body.phone #big{width:min(72vw,320px,40vh)}
+body.phone #title{font-size:24px}
+body.phone .item{padding:10px}
+</style></head><body>
+<div id="choose"><h1>Radha-Clicker</h1><p>Jai Shri Radhe! Which device are you playing on?</p><button id="pPhone">📱 Phone</button><button id="pDesk">💻 Desktop</button></div>
+<div id="bg"><svg viewBox="0 0 800 500" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6a04d"/><stop offset=".45" stop-color="#ffd98a"/><stop offset="1" stop-color="#fff0c4"/></linearGradient>
+<linearGradient id="riv" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4aa6c9"/><stop offset="1" stop-color="#2b6f9e"/></linearGradient>
+<linearGradient id="gr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4f9a45"/><stop offset="1" stop-color="#1f5a2e"/></linearGradient>
+</defs>
+<rect width="800" height="500" fill="url(#sky)"/>
+<circle cx="580" cy="150" r="48" fill="#fff4b8" opacity=".9"/><circle cx="580" cy="150" r="75" fill="#fff4b8" opacity=".25"/>
+<path d="M0 270 Q120 220 230 262 T450 258 T650 250 T800 262 V330 H0Z" fill="#7a9d6a" opacity=".6"/>
+<rect y="300" width="800" height="70" fill="url(#riv)"/>
+<path d="M0 320 q40-8 80 0 t80 0 t80 0 t80 0 t80 0 t80 0 t80 0 t80 0 t80 0 t80 0" stroke="#bfe6f5" stroke-width="2" fill="none" opacity=".6"/>
+<path d="M0 345 q50-8 100 0 t100 0 t100 0 t100 0 t100 0 t100 0 t100 0 t100 0" stroke="#bfe6f5" stroke-width="2" fill="none" opacity=".4"/>
+<rect y="365" width="800" height="135" fill="url(#gr)"/>
+<g fill="#5b3a1e"><rect x="60" y="215" width="14" height="160"/><rect x="705" y="205" width="16" height="170"/><rect x="380" y="270" width="8" height="100" opacity=".7"/></g>
+<g fill="#2e7d3a"><circle cx="67" cy="195" r="62"/><circle cx="30" cy="225" r="42"/><circle cx="105" cy="225" r="45"/>
+<circle cx="713" cy="185" r="66"/><circle cx="672" cy="220" r="44"/><circle cx="760" cy="222" r="46"/>
+<circle cx="384" cy="262" r="30" opacity=".8"/></g>
+<g fill="#ffc83d"><circle cx="50" cy="180" r="5"/><circle cx="85" cy="205" r="5"/><circle cx="700" cy="170" r="5"/><circle cx="735" cy="200" r="5"/></g>
+<g stroke="#e8e0c8" stroke-width="3"><path d="M230 330 v-40 M250 330 v-35 M270 330 v-40"/></g>
+<g id="fl"></g>
+</svg></div>
+
+<div id="toast"></div>
+<div id="app">
+ <div class="panel" id="left">
+  <h1 id="title">Radha-Clicker</h1>
+  <div id="nameWrap" title="Click to rename"><span id="nameTxt"></span><small>(click to change name)</small></div>
+  <div id="count"><div><span id="prem">0</span> Prem</div><div id="cps">per second: 0</div></div>
+  <div id="stage">
+   <svg id="big" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="button" aria-label="Krishna and Radha">
+    <defs><radialGradient id="glow"><stop offset="0" stop-color="#fff6c0"/><stop offset="1" stop-color="#f7a8c8"/></radialGradient></defs>
+    <circle cx="100" cy="100" r="96" fill="url(#glow)" stroke="#ffd34f" stroke-width="5"/>
+    <circle cx="100" cy="100" r="86" fill="none" stroke="#fff" stroke-width="1.5" stroke-dasharray="3 5"/>
+    <defs>
+<clipPath id="cc"><circle cx="100" cy="100" r="93"/></clipPath>
+<linearGradient id="ks" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4a7ae0"/><stop offset="1" stop-color="#1f3a85"/></linearGradient>
+<linearGradient id="rs" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fbdcb8"/><stop offset="1" stop-color="#e0a674"/></linearGradient>
+<linearGradient id="pt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe14d"/><stop offset="1" stop-color="#d99a00"/></linearGradient>
+<linearGradient id="lh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff7a2e"/><stop offset="1" stop-color="#c8281e"/></linearGradient>
+<linearGradient id="fe" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#27c48a"/><stop offset="1" stop-color="#0e6b4a"/></linearGradient>
+</defs>
+<g clip-path="url(#cc)">
+<!-- Krishna -->
+<path d="M44 128 Q66 135 90 128 L98 200 H36Z" fill="url(#pt)"/>
+<path d="M54 134 Q56 168 50 198 M66 136 V199 M78 134 Q76 168 84 198" stroke="#b97d00" stroke-width="1" fill="none" opacity=".6"/>
+<path d="M47 82 Q40 112 46 130 Q66 137 88 130 Q94 112 85 82Z" fill="url(#ks)"/>
+<path d="M44 124 Q66 133 91 124 L92 133 Q66 142 43 133Z" fill="#e0402a"/>
+<path d="M49 88 Q34 106 53 72" stroke="#2c52b3" stroke-width="8" stroke-linecap="round" fill="none"/>
+<path d="M85 88 Q101 100 80 70" stroke="#2c52b3" stroke-width="8" stroke-linecap="round" fill="none"/>
+<path d="M38 100 l8 2 M96 98 l-8 3" stroke="#ffc933" stroke-width="3" stroke-linecap="round"/>
+<path d="M52 82 Q66 122 82 82" stroke="#ff8fb5" stroke-width="5" stroke-linecap="round" stroke-dasharray="1 5.5" fill="none"/>
+<path d="M54 80 Q66 98 78 80" stroke="#ffd23a" stroke-width="2.5" fill="none"/><circle cx="66" cy="94" r="3" fill="#ff3d6e" stroke="#ffd23a"/>
+<rect x="60" y="64" width="12" height="9" rx="4" fill="#2c52b3"/>
+<circle cx="66" cy="52" r="17" fill="url(#ks)"/>
+<ellipse cx="60" cy="46" rx="6" ry="4" fill="#fff" opacity=".12"/>
+<path d="M48 50 Q46 30 66 29 Q86 30 84 50 Q80 36 66 36 Q52 36 48 50Z" fill="#14122b"/>
+<g fill="#14122b"><circle cx="49" cy="52" r="4"/><circle cx="83" cy="52" r="4"/><circle cx="52" cy="60" r="3"/><circle cx="80" cy="60" r="3"/></g>
+<path d="M50 40 Q66 28 82 40 L80 45 Q66 36 52 45Z" fill="#ffc933" stroke="#b97d00" stroke-width=".8"/>
+<circle cx="66" cy="37" r="2.2" fill="#ff3d6e"/>
+<path d="M68 33 Q58 8 72 -2 Q86 12 68 33Z" fill="url(#fe)"/>
+<ellipse cx="71" cy="14" rx="5" ry="7" fill="#1c5fd0" transform="rotate(14 71 14)"/><ellipse cx="71" cy="14" rx="2.4" ry="3.8" fill="#ffd21f" transform="rotate(14 71 14)"/>
+<path d="M63 41 V47" stroke="#fff3c4" stroke-width="1.6"/><circle cx="66" cy="44" r=".9" fill="#ff3d6e"/>
+<path d="M54 48 Q59 45 63 48 M69 48 Q73 45 78 48" stroke="#0b0b20" stroke-width="1.3" fill="none"/>
+<ellipse cx="59" cy="51.5" rx="3.6" ry="2" fill="#fff"/><ellipse cx="73" cy="51.5" rx="3.6" ry="2" fill="#fff"/>
+<circle cx="59.5" cy="51.5" r="1.5" fill="#1a0a05"/><circle cx="73.5" cy="51.5" r="1.5" fill="#1a0a05"/>
+<path d="M66 53 v4" stroke="#1a3a85" stroke-width="1"/><path d="M62 62 Q66 65 70 62" stroke="#e2506d" stroke-width="2" fill="none"/>
+<circle cx="49" cy="58" r="2" fill="#ffc933"/><circle cx="83" cy="58" r="2" fill="#ffc933"/>
+<path d="M44 76 L110 62" stroke="#8a5a2b" stroke-width="4" stroke-linecap="round"/>
+<path d="M58 73.5 l.5 -3.6 M90 66 l.5 -3.6 M102 63.5 l.5 -3.6" stroke="#ffc933" stroke-width="2"/>
+<circle cx="52" cy="73" r="4.2" fill="#2c52b3"/><circle cx="80" cy="69" r="4.2" fill="#2c52b3"/>
+<!-- Radha -->
+<path d="M118 120 Q139 127 160 120 L174 200 H102Z" fill="url(#lh)"/>
+<path d="M104 188 Q138 178 172 188" stroke="#ffd23a" stroke-width="4" fill="none"/>
+<path d="M112 160 Q138 150 166 160" stroke="#ffd23a" stroke-width="1.5" fill="none" stroke-dasharray="3 3"/>
+<g fill="#ffd23a" opacity=".85"><circle cx="124" cy="150" r="2"/><circle cx="138" cy="158" r="2"/><circle cx="152" cy="150" r="2"/><circle cx="130" cy="172" r="2"/><circle cx="148" cy="172" r="2"/></g>
+<path d="M120 83 Q116 104 120 124 Q139 131 158 124 Q162 104 156 83Z" fill="#d6306a"/>
+<path d="M121 118 Q139 126 157 118" stroke="#ffd23a" stroke-width="2" fill="none"/>
+<path d="M156 88 Q169 110 161 123" stroke="#f1c196" stroke-width="7" stroke-linecap="round" fill="none"/>
+<path d="M122 88 Q110 104 117 116" stroke="#f1c196" stroke-width="7" stroke-linecap="round" fill="none"/>
+<path d="M114 100 l7 2 M164 102 l-7 2" stroke="#ffd23a" stroke-width="2.6" stroke-linecap="round"/>
+<g transform="translate(116 118)"><path d="M0 0 V14" stroke="#2e8a4a" stroke-width="2"/><g fill="#ff8fc0" stroke="#d6306a" stroke-width=".6"><ellipse cx="-4" cy="-3" rx="3" ry="5" transform="rotate(-30 -4 -3)"/><ellipse cx="4" cy="-3" rx="3" ry="5" transform="rotate(30 4 -3)"/><ellipse cx="0" cy="-5" rx="3" ry="5.5"/></g></g>
+<path d="M154 50 Q170 80 162 114" stroke="#14122b" stroke-width="6" stroke-linecap="round" fill="none"/>
+<path d="M158 70 l8 1 M161 90 l7 0" stroke="#ffd23a" stroke-width="2.5"/><circle cx="162" cy="116" r="3.5" fill="#ff3d6e"/>
+<path d="M126 78 Q139 106 152 78" stroke="#ffd23a" stroke-width="2.5" fill="none"/><path d="M130 80 Q139 92 148 80" stroke="#fff" stroke-width="2" stroke-dasharray="1.5 2.5" fill="none"/>
+<rect x="133" y="68" width="11" height="9" rx="4" fill="#f1c196"/>
+<circle cx="138" cy="54" r="16" fill="url(#rs)"/>
+<ellipse cx="132" cy="48" rx="5" ry="4" fill="#fff" opacity=".18"/>
+<path d="M118 62 Q112 26 138 25 Q164 26 158 62 Q152 36 138 36 Q124 36 118 62Z" fill="#ff9fc4" stroke="#ffd23a" stroke-width="1.2"/>
+<path d="M122 56 Q124 38 138 38 Q152 38 154 56 Q149 44 138 44 Q127 44 122 56Z" fill="#14122b"/>
+<path d="M138 38 V30" stroke="#14122b" stroke-width="1"/><circle cx="138" cy="41" r="2.2" fill="#ffd23a"/><circle cx="138" cy="46.5" r="1.4" fill="#e0182d"/>
+<path d="M126 50 Q131 47 135 50 M141 50 Q145 47 150 50" stroke="#1a0a05" stroke-width="1.2" fill="none"/>
+<ellipse cx="131" cy="53" rx="3.6" ry="2" fill="#fff"/><ellipse cx="145" cy="53" rx="3.6" ry="2" fill="#fff"/>
+<circle cx="131.5" cy="53" r="1.5" fill="#1a0a05"/><circle cx="145.5" cy="53" r="1.5" fill="#1a0a05"/>
+<path d="M138 55 v3.5" stroke="#c08a5a" stroke-width="1"/><circle cx="135.8" cy="59" r=".9" fill="none" stroke="#ffd23a" stroke-width=".7"/>
+<path d="M134 63 Q138 66 142 63 Q138 64 134 63Z" fill="#d6203a" stroke="#d6203a" stroke-width="1.2"/>
+<circle cx="121" cy="60" r="2.4" fill="#ffd23a"/><circle cx="155" cy="60" r="2.4" fill="#ffd23a"/><path d="M121 63 v4 M155 63 v4" stroke="#ffd23a" stroke-width="1.5"/>
+<path d="M86 150 Q101 141 116 150" stroke="#ffe27a" stroke-width="3" fill="none" opacity=".0"/>
+<g><circle cx="62" cy="186" r="4" fill="#ffd21f"/><circle cx="80" cy="190" r="4" fill="#2f6fff"/><circle cx="100" cy="188" r="4" fill="#ffd21f"/><circle cx="120" cy="190" r="4" fill="#2f6fff"/><circle cx="140" cy="185" r="4" fill="#ffd21f"/></g>
+</g>
+
+   </svg>
+  </div>
+  <div id="clicks">Clicks: <b id="clk">0</b></div>
+  <button class="sbtn" id="openStore">🛒 Store & Upgrades</button>
+  <div id="fall"></div>
+ </div>
+ <div class="panel" id="right">
+  <button class="sbtn" id="closeStore">← Back to game</button>
+  <h3>Upgrades</h3><div id="ups"></div>
+  <h3>Store</h3><div id="store" style="width:100%"></div>
+  <div style="text-align:center;font-size:11px;opacity:.6;margin:10px 0"><span id="reset" style="cursor:pointer;text-decoration:underline">Reset game</span></div>
+ </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const ITEMS=[
+ {id:'step',n:'One Step Of Vrindavan Parikrama',ic:'👣',at:108,base:100,r:0.2},
+ {id:'mandir',n:'Mandir',ic:'🛕',at:1188,base:1100,r:8},
+ {id:'vart',n:'Ekantik Vartalap with Premanand Maharaj ji',ic:'🙏',at:10800,base:12000,r:47},
+ {id:'seva',n:'Day of Seva for Shri Radhavallabh Lal Ji',ic:'🪔',at:108000,base:130000,r:260}
+];
+const UPS=[
+ {id:'mala',n:'Tulsi Mala',d:'Clicks x2',cost:300,t:'click'},
+ {id:'bans',n:'Krishna\'s Bansuri',d:'Clicks x2',cost:4000,t:'click'},
+ {id:'govd',n:'Govardhan Blessing',d:'Production x2',cost:10000,t:'prod'},
+ {id:'naam',n:'Maha-mantra Kirtan',d:'Production x2',cost:120000,t:'prod'}
+];
+let S;
+function fresh(){return{prem:0,clicks:0,name:'Aryan',own:{},ups:[]}}
+try{S=JSON.parse(localStorage.getItem('radhaClicker'))||fresh()}catch(e){S=fresh()}
+S.own=S.own||{};S.ups=S.ups||[];
+const fmt=n=>n<1e4?(n<100&&n%1?n.toFixed(1):Math.floor(n).toLocaleString()):n<1e6?Math.floor(n).toLocaleString():n<1e9?(n/1e6).toFixed(2)+' M':(n/1e9).toFixed(2)+' B';
+const cost=it=>it.base;
+const clickPow=()=>Math.pow(2,S.ups.filter(u=>UPS.find(x=>x.id==u).t=='click').length);
+const prodMul=()=>Math.pow(2,S.ups.filter(u=>UPS.find(x=>x.id==u).t=='prod').length);
+const cps=()=>ITEMS.reduce((a,i)=>a+(S.own[i.id]||0)*i.r,0)*prodMul();
+
+/* sounds */
+let AC;
+function ctx(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AC&&AC.state=='suspended')AC.resume();return AC}
+function chime(f){const a=ctx();if(!a)return;const t=a.currentTime;
+ [f,f*2.01,f*3].forEach((fr,i)=>{const o=a.createOscillator(),g=a.createGain();o.type='sine';o.frequency.value=fr;
+  g.gain.setValueAtTime(.18/(i+1),t);g.gain.exponentialRampToValueAtTime(.0001,t+.5);o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+.55)})}
+const notes=[523,587,659,784,880];let ni=0;
+function clickSound(){chime(notes[ni++%notes.length])}
+function radhaSound(){
+ chime(392);
+ try{if('speechSynthesis' in window){speechSynthesis.cancel();const u=new SpeechSynthesisUtterance('Radha');u.rate=.7;u.pitch=1.1;u.volume=1;speechSynthesis.speak(u)}}catch(e){}
+}
+
+/* falling feathers & flowers */
+const feather=()=>`<svg width="34" height="46" viewBox="0 0 34 46"><path d="M17 44 V16" stroke="#1d6b4a" stroke-width="1.5"/><path d="M17 4 C2 12 2 30 17 36 C32 30 32 12 17 4Z" fill="#17a673"/><path d="M17 8 C8 14 8 26 17 31 C26 26 26 14 17 8Z" fill="#1c6fd1"/><ellipse cx="17" cy="19" rx="5" ry="7" fill="#0d3b8c"/><ellipse cx="17" cy="19" rx="2.5" ry="4" fill="#ffd21f"/></svg>`;
+const flower=c=>`<svg width="30" height="30" viewBox="0 0 30 30"><g fill="${c}" stroke="#0003" stroke-width=".6">${[0,72,144,216,288].map(r=>`<ellipse cx="15" cy="7.5" rx="5" ry="7" transform="rotate(${r} 15 15)"/>`).join('')}</g><circle cx="15" cy="15" r="3.5" fill="${c=='#ffd21f'?'#d97a00':'#fff3a0'}"/></svg>`;
+function drop(){
+ const L=$('fall'),w=L.clientWidth;const k=Math.random();
+ const d=document.createElement('div');d.className='fp';
+ d.innerHTML=k<.4?feather():flower(k<.7?'#ffd21f':'#2f6fff');
+ d.style.left=Math.random()*(w-40)+'px';
+ d.style.animationDuration=(1.6+Math.random()*1.4)+'s';
+ d.style.setProperty('--r',(Math.random()*540-270)+'deg');
+ L.appendChild(d);setTimeout(()=>d.remove(),3200);
+}
+function plus(e,v){const p=document.createElement('div');p.className='plus';p.textContent='+'+fmt(v);
+ const r=$('left').getBoundingClientRect();p.style.left=(e.clientX-r.left-10)+'px';p.style.top=(e.clientY-r.top-30)+'px';$('left').appendChild(p);setTimeout(()=>p.remove(),1000)}
+function toast(t){const e=$('toast');e.textContent=t;e.style.opacity=1;clearTimeout(toast.h);toast.h=setTimeout(()=>e.style.opacity=0,2600)}
+
+/* click */
+let radhaCount=0,radhaNext=3;
+$('big').addEventListener('pointerdown',e=>{
+ e.preventDefault();
+ if(++radhaCount>=radhaNext){radhaSound();radhaCount=0}else clickSound();
+ const v=clickPow();S.prem+=v;S.clicks++;
+ const b=$('big');b.classList.add('pop');setTimeout(()=>b.classList.remove('pop'),80);
+ plus(e,v);for(let i=0;i<3;i++)setTimeout(drop,i*60);
+ ITEMS.forEach(it=>{if(S.clicks==it.at){toast('Unlocked: '+it.n+'!');radhaSound()}});
+ if(S.clicks%108==0&&!ITEMS.some(it=>it.at==S.clicks))toast('108 clicks! Jai Shri Radhe 🌼');
+ update();
+});
+
+/* store */
+const store=$('store');
+ITEMS.forEach(it=>{
+ const d=document.createElement('div');d.className='item locked';d.id='it_'+it.id;
+ d.innerHTML=`<div class="ic">${it.ic}</div><div class="tx"><b>${it.n}</b><div class="cost"></div><div class="bar"><i></i></div></div><div class="n"></div>`;
+ d.onclick=()=>{
+  if(S.clicks<it.at)return;const c=cost(it);
+  if(S.prem>=c){S.prem-=c;S.own[it.id]=(S.own[it.id]||0)+1;radhaSound();save();update()}
+ };
+ store.appendChild(d);
+});
+function buildUps(){
+ const U=$('ups');U.innerHTML='';
+ UPS.filter(u=>!S.ups.includes(u.id)).slice(0,4).forEach(u=>{
+  const d=document.createElement('div');d.className='up';d.dataset.id=u.id;
+  d.innerHTML=`<b>${u.n}</b><br>${u.d}<br><span>${fmt(u.cost)} Prem</span>`;
+  d.onclick=()=>{if(S.prem>=u.cost){S.prem-=u.cost;S.ups.push(u.id);radhaSound();buildUps();save();update()}};
+  U.appendChild(d)});
+}
+function update(){
+ $('prem').textContent=fmt(S.prem);$('clk').textContent=S.clicks.toLocaleString();
+ $('cps').textContent='per second: '+fmt(cps()*1)+(cps()<10?'':'');
+ ITEMS.forEach(it=>{
+  const d=$('it_'+it.id),open=S.clicks>=it.at,c=cost(it);
+  d.classList.toggle('locked',!open);d.classList.toggle('no',open&&S.prem<c);
+  d.querySelector('.cost').textContent=open?fmt(c)+' Prem  (+'+Number((it.r*prodMul()).toFixed(1))+'/s each)':'Unlocks at '+it.at.toLocaleString()+' clicks';
+  d.querySelector('.bar').style.display=open?'none':'block';
+  d.querySelector('.bar i').style.width=Math.min(100,S.clicks/it.at*100)+'%';
+  d.querySelector('.n').textContent=open?(S.own[it.id]||0):'🔒';
+ });
+ document.querySelectorAll('.up').forEach(e=>{const u=UPS.find(x=>x.id==e.dataset.id);e.classList.toggle('no',S.prem<u.cost)});
+}
+
+/* name */
+function showName(){$('nameWrap').innerHTML=`<span id="nameTxt">${S.name.replace(/[<>&]/g,'')}'s Kunj</span><small>(click to change name)</small>`;
+ document.title=S.name.replace(/[<>&]/g,'')+"'s Kunj – Radha-Clicker"}
+$('nameWrap').addEventListener('click',function h(){
+ if(this.querySelector('input'))return;
+ this.innerHTML='<input maxlength="20" placeholder="Your name">';
+ const i=this.querySelector('input');i.value=S.name;i.focus();i.select();
+ const done=()=>{S.name=(i.value.trim()||'Aryan');save();showName()};
+ i.addEventListener('keydown',e=>{if(e.key=='Enter')done()});i.addEventListener('blur',done);
+});
+
+function save(){try{localStorage.setItem('radhaClicker',JSON.stringify(S))}catch(e){}}
+$('reset').onclick=()=>{if($('reset').dataset.s){S=fresh();save();buildUps();showName();update();$('reset').textContent='Reset game';delete $('reset').dataset.s}else{$('reset').textContent='Click again to confirm reset';$('reset').dataset.s=1;setTimeout(()=>{$('reset').textContent='Reset game';delete $('reset').dataset.s},3000)}};
+
+/* passive production */
+let last=Date.now(),sv=0;
+setInterval(()=>{
+ const n=Date.now(),dt=(n-last)/1000;last=n;const c=cps();
+ if(c>0){S.prem+=c*dt;if(Math.random()<Math.min(.5,c/40))drop()}
+ update();if(++sv%20==0)save();
+},100);
+
+/* scattered ground flowers in the background */
+(function(){let h='';for(let i=0;i<60;i++){const x=Math.random()*800,y=372+Math.random()*125,c=Math.random()<.5?'#ffd21f':'#2f6fff';h+=`<circle cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="${(2+Math.random()*2.5).toFixed(1)}" fill="${c}"/>`}
+ $('fl').innerHTML=h})();
+
+function pick(m){document.body.classList.add(m);$('choose').style.display='none';ctx();
+ if(m=='phone'){
+  document.addEventListener('gesturestart',e=>e.preventDefault());
+  document.addEventListener('gesturechange',e=>e.preventDefault());
+  document.addEventListener('dblclick',e=>e.preventDefault());
+  document.addEventListener('touchstart',e=>{if(e.touches.length>1)e.preventDefault()},{passive:false});
+  let lt=0;document.addEventListener('touchend',e=>{const n=Date.now();if(n-lt<350&&!e.target.closest('#right,.sbtn'))e.preventDefault();lt=n},{passive:false});
+ }
+}
+$('openStore').onclick=()=>{document.body.classList.add('store');$('right').scrollTop=0};
+$('closeStore').onclick=()=>document.body.classList.remove('store');
+setInterval(()=>{const ok=ITEMS.some(it=>S.clicks>=it.at&&S.prem>=cost(it))||UPS.some(u=>!S.ups.includes(u.id)&&S.prem>=u.cost);$('openStore').textContent='🛒 Store & Upgrades'+(ok?' ●':'')},500);
+$('pPhone').onclick=()=>pick('phone');$('pDesk').onclick=()=>pick('desktop');
+showName();buildUps();update();
+</script>
+</body></html>
